@@ -4,16 +4,22 @@ CC = gcc
 TEST = test_amx_tmm
 BIN = $(TEST).out
 ASS = $(TEST).s
-CFILES = $(TEST).c 
+SRCS = $(TEST).c run.c utils.c
+OBJS = $(SRCS:.c=.o)
 
-all:
-	$(CC) $(CFLAG) $(CFILES) -o $(BIN) $(LIBS)
+all: $(BIN)
+
+$(BIN): $(OBJS)
+	$(CC) $(CFLAG) -o $@ $^
+
+%.o: %.c
+	$(CC) $(CFLAG) -c $< -o $@
 
 ass:
-	$(CC) $(CFLAG) $(CFILES) -o $(ASS) $(LIBS) -S
+	$(CC) $(CFLAG) $(SRCS) -o $(ASS) -S
 
 clean:
-	rm -rf $(TEST) $(ASS)
+	rm -rf $(BIN) $(ASS) *.o
 
 .PHONY: clean
 
