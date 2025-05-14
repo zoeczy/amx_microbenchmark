@@ -1,0 +1,109 @@
+
+#include <immintrin.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
+
+#include "utils.h"
+#include "test.h"
+
+typedef int (*amx_test)(int64_t num_iter, int8_t *A, int8_t *B, int32_t *C, size_t M, size_t N, size_t K);
+
+typedef struct {
+    const char* name;
+    amx_test func;
+} amx_test_entry;
+
+amx_test_entry amx_tests[] = {
+    {"amx_tmm", amx_tmm},
+    {"amx_l1",  amx_l1},
+    {NULL, NULL}
+};
+
+amx_test_entry* find_test(const char* name) {
+    for (int i = 0; amx_tests[i].name != NULL; ++i) {
+        if (strcmp(amx_tests[i].name, name) == 0) {
+            return &amx_tests[i];
+        }
+    }
+
+    return NULL;
+}
+
+void amx_b_layout_transform(uint8_t *src, uint8_t *dst, size_t rows_src, size_t cols_src)
+{
+    for (int k = 0; k < rows_src/4; k++)
+    {
+        for (int i = 0; i < cols_src; i ++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                dst[k*cols_src*4 + i*4 + j] = src[k*cols_src*4 + j*cols_src + i];
+            }
+        }
+    }
+}
+
+int main(int argc, char** argv) {
+    if (argc != 6) {
+        printf("Usage: %s name niters M N K\n", argv[0]);
+        exit(1);
+    }
+
+    const char* name = argv[1];
+    int num_iters = atoi(argv[2]);
+    size_t M = (size_t)atoi(argv[3]);
+    size_t N = (size_t)atoi(argv[4]);
+    size_t K = (size_t)atoi(argv[5]);
+
+    int8_t *A = (int8_t *)_mm_malloc(M * K * sizeof(int8_t), 64);
+    int8_t *B = (int8_t *)_mm_malloc(K * N * sizeof(int8_t), 64);
+    int8_t *B_trans = (int8_t *)_mm_malloc(K * N * sizeof(int8_t), 64);
+    int32_t *C = (int32_t *)_mm_malloc(M * N * sizeof(int32_t), 64);
+    init_matrices(A, B, C, M, N, K);
+    amx_b_layout_transform(B, B_trans, K, N);
+
+    amx_test_entry* entry = find_test(name);
+ 
+    // Request permission to linux kernel to run AMX 
+    if (!set_tiledata_use())
+       exit(-1);
+    // Load tile configuration 
+    __tilecfg tile_data = {0};
+    init_tile_config (&tile_data);
+
+    // correctness test
+    entry->func(1, A, B_trans, C, M, N, K);
+    // print_matrix_to_file(A, M, K, 1, "A.txt");
+    // print_matrix_to_file(B, K, N, 1, "B.txt");
+    // print_matrix_to_file(C, M, N, 4, "C.txt");
+    if (verify_matrix_multiplication(A, B, C, M, N, K)) {
+        printf("Matrix multiplication is correct.\n");
+    } else {
+        printf("Matrix multiplication is incorrect.\n");
+    }
+
+    // warmup
+    int ret = entry->func(10000000, A, B_trans, C, M, N, K);
+    // run test
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    ret = entry->func(num_iters, A, B_trans, C, M, N, K);
+    clock_gettime(CLOCK_MONOTONIC, &end);
+ 
+    // Calculate elapsed time in seconds
+    double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+    double ops = 0.0;
+    if (strcmp("amx_tmm", name) == 0)
+        ops = 2.0 * 16 * 16 * 64 * 4 * num_iters;
+    else 
+        ops = M * N * K * 2 * num_iters;
+
+    double gflops = (ops / elapsed) / 1e9;
+    printf("Performance:     [%.2f] GFLOPS\n", gflops);
+    printf("MAC Utilization: [%.2f%%]\n", (gflops / 8600) * 100.0); 
+    // printf("%d\n", ret);
+ 
+    return 0;
+ }

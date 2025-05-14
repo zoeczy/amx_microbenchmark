@@ -12,14 +12,14 @@
 #include "utils.h"
 
 
-int8_t A[8*4096*16] AMX_ALIGN(64) = {0};
-int8_t B[8*4096*16] AMX_ALIGN(64) = {0};
+// int8_t A[8*4096*16] AMX_ALIGN(64) = {0};
+// int8_t B[8*4096*16] AMX_ALIGN(64) = {0};
 
-int64_t stride = 64;
+// int64_t stride = 64;
 
 
 // test
-int amx_tmm(int niters) {
+int amx_tmm(int niters, int8_t *A, int8_t *B, int32_t *C, size_t M, size_t N, size_t K) {
 	int a = 0;
 	for (int i = 0; i < niters; ++i) {
       _tile_loadd(0, A, 64);

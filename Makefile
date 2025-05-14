@@ -1,25 +1,36 @@
 # CFLAG = -O2 -march=native -fno-strict-aliasing
 CFLAG = -march=native -fno-strict-aliasing -g
 CC = gcc
-TEST = test_amx_tmm
-BIN = $(TEST).out
-ASS = $(TEST).s
-SRCS = $(TEST).c run.c utils.c
-OBJS = $(SRCS:.c=.o)
 
-all: $(BIN)
+# Directories
+SRC_DIR = src
+KERNEL_DIR = $(SRC_DIR)/kernel
+BUILD_DIR = build
+INCLUDE_DIR = include
+
+
+TEST = amx_tmm
+BIN = $(BUILD_DIR)/amx_microbenchmark.out
+ASS = $(BUILD_DIR)/amx_microbenchmark.s
+SRCS = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(KERNEL_DIR)/*.c) main.c
+OBJS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(notdir $(SRCS)))
+
+all: build $(BIN)
+
+build:
+	mkdir -p $(BUILD_DIR)
 
 $(BIN): $(OBJS)
-	$(CC) $(CFLAG) -o $@ $^
+	$(CC) $(CFLAG) -I$(INCLUDE_DIR) -o $@ $^
 
-%.o: %.c
-	$(CC) $(CFLAG) -c $< -o $@
+vpath %.c $(SRC_DIR) $(KERNEL_DIR) ./
+$(BUILD_DIR)/%.o: %.c
+	$(CC) $(CFLAG) -I$(INCLUDE_DIR) -c $<  -o $@
 
-ass:
-	$(CC) $(CFLAG) $(SRCS) -o $(ASS) -S
+ass: build
+	$(CC) $(CFLAG) $(SRCS) -o $(BUILD_DIR)/assembly.s -S
 
 clean:
-	rm -rf $(BIN) $(ASS) *.o
+	rm -rf $(BUILD_DIR)
 
-.PHONY: clean
-
+.PHONY:  all build clean test ass
