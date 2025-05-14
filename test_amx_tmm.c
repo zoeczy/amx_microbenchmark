@@ -19,7 +19,7 @@ int64_t stride = 64;
 
 
 // test
-int test_mac_utilization(int niters) {
+int amx_tmm(int niters) {
 	int a = 0;
 	for (int i = 0; i < niters; ++i) {
       _tile_loadd(0, A, 64);

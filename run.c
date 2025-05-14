@@ -8,13 +8,38 @@
 #include "utils.h"
 #include "test.h"
 
+typedef int (*amx_test)(int64_t num_iter);
+
+typedef struct {
+    const char* name;
+    amx_test func;
+} amx_test_entry;
+
+amx_test_entry amx_tests[] = {
+    {"amx_tmm", amx_tmm},
+    {NULL, NULL}
+};
+
+amx_test_entry* find_test(const char* name) {
+    for (int i = 0; amx_tests[i].name != NULL; ++i) {
+        if (strcmp(amx_tests[i].name, name) == 0) {
+            return &amx_tests[i];
+        }
+    }
+
+    return NULL;
+}
+
 int main(int argc, char** argv) {
-    if (argc != 2) {
-        printf("Usage: %s niters\n", argv[0]);
+    if (argc != 3) {
+        printf("Usage: %s name niters\n", argv[0]);
         exit(1);
     }
  
-    int num_iters = atoi(argv[1]);
+    const char* name = argv[1];
+    int num_iters = atoi(argv[2]);
+
+    amx_test_entry* entry = find_test(name);
  
     struct timespec start, end;
  
@@ -26,11 +51,14 @@ int main(int argc, char** argv) {
  
     // Load tile configuration 
     init_tile_config (&tile_data);
+
+    // warmup
+    int ret = entry->func(1000000);
  
     clock_gettime(CLOCK_MONOTONIC, &start);
  
     // run test
-    int ret = test_mac_utilization(num_iters);
+    ret = entry->func(num_iters);
  
     clock_gettime(CLOCK_MONOTONIC, &end);
  
