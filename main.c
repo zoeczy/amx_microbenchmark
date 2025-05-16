@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include <string.h>
 
 #include "utils.h"
 #include "test.h"
@@ -16,7 +17,11 @@ typedef struct {
 } amx_test_entry;
 
 amx_test_entry amx_tests[] = {
-    {"amx_tmm", amx_tmm},
+    {"amx_tmm_4ld4tdpb_with_dep", amx_tmm_4ld4tdpb_with_dep},
+    {"amx_tmm_4tdpb4st_with_dep_1", amx_tmm_4tdpb4st_with_dep_1},
+    {"amx_tmm_4tdpb4st_with_dep_2", amx_tmm_4tdpb4st_with_dep_2},
+    {"amx_tmm_4tdpb4st_without_dep", amx_tmm_4tdpb4st_without_dep},
+    {"amx_tmm_4ld4tdpb4st_with_dep_100", amx_tmm_4ldtdpb4st_with_dep_100},
     {"amx_l1",  amx_l1},
     {"amx_l1_bw",  amx_l1_bw},
     {NULL, NULL}
@@ -96,18 +101,27 @@ int main(int argc, char** argv) {
     // Calculate elapsed time in seconds
     double elapsed = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
     double ops = 0.0;
-    if (strcmp("amx_tmm", name) == 0)
+    // if (strcmp("amx_tmm", name) == 0)
+    if (strstr(name, "amx_tmm") != NULL) {
         ops = 2.0 * 16 * 16 * 64 * 4 * num_iters;
-    else 
+    }
+    else {
         ops = M * N * K * 2 * num_iters;
+    }
 
     double gflops = (ops / elapsed) / 1e9;
     printf("Performance:     [%.2f] GFLOPS\n", gflops);
-    printf("MAC Utilization: [%.2f%%]\n", (gflops / 8600) * 100.0); 
+    printf("MAC Utilization: [%.2f%%]\n", (gflops / 6200) * 100.0); 
     // printf("%d\n", ret);
 
-    double load_gbytes = 2 * (M/(16*2)) * (N/(16*2)) * (K/64) * (16*2*64+16*2*64) * num_iters / 1e9;
-    double store_gbytes = (M/(16*2)) * (N/(16*2)) * (4*16*16) * num_iters / 1e9;
+    double A_bytes = M*K*sizeof(int8_t);
+    double B_bytes = K*N*sizeof(int8_t);
+    double C_bytes = M*N*sizeof(int8_t);
+    double total_kbytes = (A_bytes+B_bytes+C_bytes) / 1024;
+    printf("A/B/C KB:     [%.2f] KB\n", total_kbytes);
+
+    double load_gbytes = (M/(16*2)) * (N/(16*2)) * (K/64) * (16*2*64+16*2*64) * num_iters / 1e9;
+    double store_gbytes = (M/(16*2)) * (N/(16*2)) * (4*16*64) * num_iters / 1e9;
     double load_bw = load_gbytes / elapsed;
     double store_bw = store_gbytes / elapsed;
     printf("Read GB:     [%.2f] GB\n", load_gbytes);
@@ -116,7 +130,6 @@ int main(int argc, char** argv) {
     printf("Store BW:    [%.2f] GB/s\n", store_bw);
     printf("Read BW Utilization: [%.2f%%]\n", (load_bw / (64*2*3.126)) * 100.0); 
     printf("Store BW Utilization: [%.2f%%]\n", (store_bw / (64*3.126)) * 100.0); 
- 
  
     return 0;
  }
