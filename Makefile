@@ -1,5 +1,6 @@
 # CFLAG = -O2 -march=native -fno-strict-aliasing
-CFLAG = -march=native -fno-strict-aliasing -g
+# CFLAG = -march=native -fno-strict-aliasing -g
+CFLAG = -march=native -fno-strict-aliasing -O3
 CC = gcc
 
 # Directories
@@ -28,7 +29,7 @@ $(BUILD_DIR)/%.o: %.c
 	$(CC) $(CFLAG) -I$(INCLUDE_DIR) -c $<  -o $@
 
 ass: build
-	$(CC) $(CFLAG) $(SRCS) -o $(BUILD_DIR)/assembly.s -S
+	$(CC) $(CFLAG) $(KERNEL_DIR)/amx_l1.c -I$(INCLUDE_DIR) -o $(ASS) -S
 
 clean:
 	rm -rf $(BUILD_DIR)

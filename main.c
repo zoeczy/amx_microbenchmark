@@ -18,6 +18,7 @@ typedef struct {
 amx_test_entry amx_tests[] = {
     {"amx_tmm", amx_tmm},
     {"amx_l1",  amx_l1},
+    {"amx_l1_bw",  amx_l1_bw},
     {NULL, NULL}
 };
 
@@ -104,6 +105,18 @@ int main(int argc, char** argv) {
     printf("Performance:     [%.2f] GFLOPS\n", gflops);
     printf("MAC Utilization: [%.2f%%]\n", (gflops / 8600) * 100.0); 
     // printf("%d\n", ret);
+
+    double load_gbytes = 2 * (M/(16*2)) * (N/(16*2)) * (K/64) * (16*2*64+16*2*64) * num_iters / 1e9;
+    double store_gbytes = (M/(16*2)) * (N/(16*2)) * (4*16*16) * num_iters / 1e9;
+    double load_bw = load_gbytes / elapsed;
+    double store_bw = store_gbytes / elapsed;
+    printf("Read GB:     [%.2f] GB\n", load_gbytes);
+    printf("Store GB:    [%.2f] GB\n", store_gbytes);
+    printf("Read BW:     [%.2f] GB/s\n", load_bw);
+    printf("Store BW:    [%.2f] GB/s\n", store_bw);
+    printf("Read BW Utilization: [%.2f%%]\n", (load_bw / (64*2*3.126)) * 100.0); 
+    printf("Store BW Utilization: [%.2f%%]\n", (store_bw / (64*3.126)) * 100.0); 
+ 
  
     return 0;
  }
