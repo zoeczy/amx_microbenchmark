@@ -20,10 +20,13 @@ amx_test_entry amx_tests[] = {
     {"amx_tmm_4ld4tdpb_with_dep", amx_tmm_4ld4tdpb_with_dep},
     {"amx_tmm_4tdpb4st_with_dep_1", amx_tmm_4tdpb4st_with_dep_1},
     {"amx_tmm_4tdpb4st_with_dep_2", amx_tmm_4tdpb4st_with_dep_2},
-    {"amx_tmm_4tdpb4st_without_dep", amx_tmm_4tdpb4st_without_dep},
+    {"amx_tmm_4tdpb4st_without_dep_1", amx_tmm_4tdpb4st_without_dep_1},
+    {"amx_tmm_4tdpb4st_without_dep_2", amx_tmm_4tdpb4st_without_dep_2},
     {"amx_tmm_4ld4tdpb4st_with_dep_100", amx_tmm_4ldtdpb4st_with_dep_100},
     {"amx_l1",  amx_l1},
-    {"amx_l1_bw",  amx_l1_bw},
+    {"amx_l1_bw_load_store",  amx_l1_bw_load_store},
+    {"amx_l1_bw_load",  amx_l1_bw_load},
+    {"amx_l1_bw_store",  amx_l1_bw_store},
     {NULL, NULL}
 };
 
@@ -35,20 +38,6 @@ amx_test_entry* find_test(const char* name) {
     }
 
     return NULL;
-}
-
-void amx_b_layout_transform(uint8_t *src, uint8_t *dst, size_t rows_src, size_t cols_src)
-{
-    for (int k = 0; k < rows_src/4; k++)
-    {
-        for (int i = 0; i < cols_src; i ++)
-        {
-            for (int j = 0; j < 4; j++)
-            {
-                dst[k*cols_src*4 + i*4 + j] = src[k*cols_src*4 + j*cols_src + i];
-            }
-        }
-    }
 }
 
 int main(int argc, char** argv) {
@@ -111,7 +100,7 @@ int main(int argc, char** argv) {
 
     double gflops = (ops / elapsed) / 1e9;
     printf("Performance:     [%.2f] GFLOPS\n", gflops);
-    printf("MAC Utilization: [%.2f%%]\n", (gflops / 6200) * 100.0); 
+    printf("MAC Utilization: [%.2f%%]\n", (gflops / (2048*3.126)) * 100.0); 
     // printf("%d\n", ret);
 
     double A_bytes = M*K*sizeof(int8_t);

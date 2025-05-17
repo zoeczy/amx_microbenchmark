@@ -1,9 +1,6 @@
 
 #include <immintrin.h>
-#include <stdlib.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <sys/syscall.h>
 
 #include "utils.h"
 
@@ -68,7 +65,27 @@ int amx_tmm_4tdpb4st_with_dep_2(int niters, int8_t *A, int8_t *B, int32_t *C, si
 }
 
 // 100% MAC utilization by tdpb/store parallelism
-int amx_tmm_4tdpb4st_without_dep(int niters, int8_t *A, int8_t *B, int32_t *C, size_t M, size_t N, size_t K) {
+int amx_tmm_4tdpb4st_without_dep_1(int niters, int8_t *A, int8_t *B, int32_t *C, size_t M, size_t N, size_t K) {
+	int a = 0;
+	for (int i = 0; i < niters; ++i) {
+      _tile_dpbssd(2, 1, 0);
+      _tile_stored(6, C, 64);
+
+      _tile_dpbssd(3, 1, 0);
+      _tile_stored(6, C, 64);
+
+      _tile_dpbssd(4, 1, 0);
+      _tile_stored(6, C, 64);
+
+      _tile_dpbssd(5, 1, 0);
+      _tile_stored(6, C, 64);
+	}
+
+	return a;
+}
+
+// 100% MAC utilization by tdpb/store parallelism
+int amx_tmm_4tdpb4st_without_dep_2(int niters, int8_t *A, int8_t *B, int32_t *C, size_t M, size_t N, size_t K) {
 	int a = 0;
 	for (int i = 0; i < niters; ++i) {
       _tile_dpbssd(2, 1, 0);

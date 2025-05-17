@@ -41,3 +41,17 @@ bool set_tiledata_use()
 
    return true;
 }
+
+void amx_b_layout_transform(uint8_t *src, uint8_t *dst, size_t rows_src, size_t cols_src)
+{
+    for (int k = 0; k < rows_src/4; k++)
+    {
+        for (int i = 0; i < cols_src; i ++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                dst[k*cols_src*4 + i*4 + j] = src[k*cols_src*4 + j*cols_src + i];
+            }
+        }
+    }
+}
