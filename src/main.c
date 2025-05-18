@@ -17,16 +17,16 @@ typedef struct {
 } amx_test_entry;
 
 amx_test_entry amx_tests[] = {
-    {"amx_tmm_4ld4tdpb_with_dep", amx_tmm_4ld4tdpb_with_dep},
-    {"amx_tmm_4tdpb4st_with_dep_1", amx_tmm_4tdpb4st_with_dep_1},
-    {"amx_tmm_4tdpb4st_with_dep_2", amx_tmm_4tdpb4st_with_dep_2},
-    {"amx_tmm_4tdpb4st_without_dep_1", amx_tmm_4tdpb4st_without_dep_1},
-    {"amx_tmm_4tdpb4st_without_dep_2", amx_tmm_4tdpb4st_without_dep_2},
-    {"amx_tmm_4ld4tdpb4st_with_dep_100", amx_tmm_4ldtdpb4st_with_dep_100},
-    {"amx_l1",  amx_l1},
-    {"amx_l1_bw_load_store",  amx_l1_bw_load_store},
-    {"amx_l1_bw_load",  amx_l1_bw_load},
-    {"amx_l1_bw_store",  amx_l1_bw_store},
+    {"tmm_4ld4tdpb_with_dep", tmm_4ld4tdpb_with_dep},
+    {"tmm_4tdpb4st_with_dep_1", tmm_4tdpb4st_with_dep_1},
+    {"tmm_4tdpb4st_with_dep_2", tmm_4tdpb4st_with_dep_2},
+    {"tmm_4tdpb4st_without_dep_1", tmm_4tdpb4st_without_dep_1},
+    {"tmm_4tdpb4st_without_dep_2", tmm_4tdpb4st_without_dep_2},
+    {"tmm_4ld4tdpb4st_with_dep_100", tmm_4ldtdpb4st_with_dep_100},
+    {"l1",  l1},
+    {"l1_bw_load_store",  l1_bw_load_store},
+    {"l1_bw_load",  l1_bw_load},
+    {"l1_bw_store",  l1_bw_store},
     {NULL, NULL}
 };
 
@@ -45,6 +45,8 @@ int main(int argc, char** argv) {
         printf("Usage: %s name niters M N K\n", argv[0]);
         exit(1);
     }
+
+    printf("TILE_M=%d, TILE_K=%d, TILE_N=%d\n", TILE_M, TILE_K, TILE_N);
 
     const char* name = argv[1];
     int num_iters = atoi(argv[2]);
@@ -80,11 +82,20 @@ int main(int argc, char** argv) {
     }
 
     // warmup
-    int ret = entry->func(10000000, A, B_trans, C, M, N, K);
+    int ret = entry->func(1000000, A, B_trans, C, M, N, K);
+
     // run test
     struct timespec start, end;
     clock_gettime(CLOCK_MONOTONIC, &start);
+
+    #if ENABLE_TRACE == 1
+    __PINBALL_TRACE_START__();
+    #endif
     ret = entry->func(num_iters, A, B_trans, C, M, N, K);
+    #if ENABLE_TRACE == 1
+    __PINBALL_TRACE_STOP__();
+    #endif
+
     clock_gettime(CLOCK_MONOTONIC, &end);
  
     // Calculate elapsed time in seconds
@@ -92,7 +103,7 @@ int main(int argc, char** argv) {
     double ops = 0.0;
     // if (strcmp("amx_tmm", name) == 0)
     if (strstr(name, "amx_tmm") != NULL) {
-        ops = 2.0 * 16 * 16 * 64 * 4 * num_iters;
+        ops = 2.0 * TILE_M * TILE_N * TILE_K * 4 * num_iters;
     }
     else {
         ops = M * N * K * 2 * num_iters;
@@ -109,8 +120,8 @@ int main(int argc, char** argv) {
     double total_kbytes = (A_bytes+B_bytes+C_bytes) / 1024;
     printf("A/B/C KB:     [%.2f] KB\n", total_kbytes);
 
-    double load_gbytes = (M/(16*2)) * (N/(16*2)) * (K/64) * (16*2*64+16*2*64) * num_iters / 1e9;
-    double store_gbytes = (M/(16*2)) * (N/(16*2)) * (4*16*64) * num_iters / 1e9;
+    double load_gbytes = (M/(TILE_M*2)) * (N/(TILE_N*2)) * (K/TILE_K) * (TILE_M*2*TILE_K+TILE_N*2*TILE_K) * num_iters / 1e9;
+    double store_gbytes = (M/(TILE_M*2)) * (N/(TILE_N*2)) * (4*TILE_M*TILE_K) * num_iters / 1e9;
     double load_bw = load_gbytes / elapsed;
     double store_bw = store_gbytes / elapsed;
     printf("Read GB:     [%.2f] GB\n", load_gbytes);

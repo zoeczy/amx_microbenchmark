@@ -2,7 +2,7 @@
 #include <immintrin.h>
 #include "utils.h"
 
-int amx_l1(int niters, int8_t *A, int8_t *B, int32_t *C, size_t M, size_t N, size_t K) {
+int l1(int niters, int8_t *A, int8_t *B, int32_t *C, size_t M, size_t N, size_t K) {
 
   for(int i = 0; i < niters; ++i)
   {
@@ -38,7 +38,7 @@ int amx_l1(int niters, int8_t *A, int8_t *B, int32_t *C, size_t M, size_t N, siz
 
 // load bw utilization: 50% (limited by store)
 // store bw utilization: 100%
-int amx_l1_bw_load_store(int niters, int8_t *A, int8_t *B, int32_t *C, size_t M, size_t N, size_t K) {
+int l1_bw_load_store(int niters, int8_t *A, int8_t *B, int32_t *C, size_t M, size_t N, size_t K) {
 
   for(int i = 0; i < niters; ++i)
   {
@@ -66,7 +66,7 @@ int amx_l1_bw_load_store(int niters, int8_t *A, int8_t *B, int32_t *C, size_t M,
 }
 
 // load bw utilization: 100%
-int amx_l1_bw_load(int niters, int8_t *A, int8_t *B, int32_t *C, size_t M, size_t N, size_t K) {
+int l1_bw_load(int niters, int8_t *A, int8_t *B, int32_t *C, size_t M, size_t N, size_t K) {
 
   for(int i = 0; i < niters; ++i)
   {
@@ -85,7 +85,7 @@ int amx_l1_bw_load(int niters, int8_t *A, int8_t *B, int32_t *C, size_t M, size_
 }
 
 // store bw utilization: 100%
-int amx_l1_bw_store(int niters, int8_t *A, int8_t *B, int32_t *C, size_t M, size_t N, size_t K) {
+int l1_bw_store(int niters, int8_t *A, int8_t *B, int32_t *C, size_t M, size_t N, size_t K) {
 
   for(int i = 0; i < niters; ++i)
   {

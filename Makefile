@@ -1,37 +1,20 @@
-# CFLAG = -O2 -march=native -fno-strict-aliasing
-# CFLAG = -march=native -fno-strict-aliasing -g
-CFLAG = -march=native -fno-strict-aliasing -O3
-CC = gcc
+CASE_LIST = tmm_4ld4tdpb_with_dep l1
 
-# Directories
-SRC_DIR = src
-KERNEL_DIR = $(SRC_DIR)/kernel
-BUILD_DIR = build
-INCLUDE_DIR = include
+include config.mk
 
-
-TEST = amx_tmm
-BIN = $(BUILD_DIR)/amx_microbenchmark.out
-ASS = $(BUILD_DIR)/amx_microbenchmark.s
-SRCS = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(KERNEL_DIR)/*.c) main.c
-OBJS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(notdir $(SRCS)))
-
-all: build $(BIN)
+default: build
 
 build:
-	mkdir -p $(BUILD_DIR)
+	cd src && make TILE_SHAPE=$(TILE_SHAPE) ENABLE_TRACE=$(ENABLE_TRACE)
 
-$(BIN): $(OBJS)
-	$(CC) $(CFLAG) -I$(INCLUDE_DIR) -o $@ $^
-
-vpath %.c $(SRC_DIR) $(KERNEL_DIR) ./
-$(BUILD_DIR)/%.o: %.c
-	$(CC) $(CFLAG) -I$(INCLUDE_DIR) -c $<  -o $@
-
-ass: build
-	$(CC) $(CFLAG) $(KERNEL_DIR)/amx_l1.c -I$(INCLUDE_DIR) -o $(ASS) -S
+ # TODO [wxc/20250518]: call sde tracing facilities on each case
+trace:
+	@for case in $(CASE_LIST); do \
+		echo $$case; \
+	done
 
 clean:
-	rm -rf $(BUILD_DIR)
+	cd src && make clean
 
-.PHONY:  all build clean test ass
+run:
+	./bin/amx_microbenchmark.out $(CASE) $(NITERS) $(M) $(N) $(K) 

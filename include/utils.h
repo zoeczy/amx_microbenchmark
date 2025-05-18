@@ -5,10 +5,33 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+// trace facilities
+extern uint64_t g_status;
+
+#ifdef __cplusplus
+extern "C" {
+#endif 
+  volatile void start_tracing();
+  volatile void stop_tracing();
+#ifdef __cplusplus
+}
+#endif 
+
+#define __PINBALL_TRACE_START__() __asm__("   callq start_tracing\n")
+#define __PINBALL_TRACE_STOP__() __asm__("   callq stop_tracing\n")
+
 #define MAX 1024
+
+#if TILE_SHAPE == 256
 #define MAX_ROWS 16
 #define MAX_COLS 64
 #define STRIDE 64
+#else
+#define MAX_ROWS 8
+#define MAX_COLS 32
+#define STRIDE 32
+#endif
+
 #define ARCH_GET_XCOMP_PERM     0x1022
 #define ARCH_REQ_XCOMP_PERM     0x1023
 #define XFEATURE_XTILECFG       17
@@ -23,9 +46,15 @@
 #define TMM6    6
 #define TMM7    7
 
+#if TILE_SHAPE == 256
 #define TILE_M 16
 #define TILE_K 64
 #define TILE_N 16
+#else
+#define TILE_M 8
+#define TILE_K 32
+#define TILE_N 8
+#endif
 
 #define AMX_ALIGN(x) __attribute__((aligned(x)))
 

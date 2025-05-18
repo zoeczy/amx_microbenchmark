@@ -3,18 +3,23 @@
 #include <sys/syscall.h>
 #include <immintrin.h>
 
+// trace facilities
+uint64_t g_status = 0;
+
+volatile void start_tracing() {
+  g_status = 1;
+}
+
+volatile void stop_tracing() {
+  g_status = 0;
+}
+
 /* Initialize tile config */
 void init_tile_config (__tilecfg *tileinfo)
 {
   int i;
   tileinfo->palette_id = 1;
   tileinfo->start_row = 0;
-
-//   for (i = 0; i < 1; ++i)
-//   {
-//     tileinfo->colsb[i] = MAX_ROWS;
-//     tileinfo->rows[i] =  MAX_ROWS;
-//   }
 
   for (i = 0; i < 8; ++i)
   {
