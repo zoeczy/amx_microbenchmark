@@ -22,3 +22,20 @@ It will execute `amx_microbenchmark.out` according to the runtime configs define
 # number of iterations must no less than 10^9 to fully utilize AMX, useless args MNK in tmm level benchmark
 ./bin/amx_microbenchmark.out l1 10000 64 64 64
 ```
+
+## Note
+### Frequency
+We assumed that the CPU frequency is 3.126MHz, In Intel(R) Xeon(R) w3-2435, we need to shut down TurboBoost.
+``` SHELL
+# CHECK THE SUPPORT FOR INTEL_PSTATE
+cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_driver
+# SHUT DOWN TEMPORARY
+echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo
+# LOOK UP THE STATUS
+cat /sys/devices/system/cpu/intel_pstate/no_turbo
+```
+use turbostat to check the frequency
+``` SHELL
+sudo turbostat
+```
+
